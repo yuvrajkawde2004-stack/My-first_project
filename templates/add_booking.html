@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Booking</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f8f8f8;
+            padding: 20px;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            width: 400px;
+            border-radius: 8px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        button {
+            background: green;
+            color: white;
+            border: none;
+        }
+        a {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<a href="/dashboard">Back to Dashboard</a>
+
+<h2>Add Booking</h2>
+
+<form method="POST">
+    <input type="text" name="customer_name" placeholder="Customer Name" required>
+    <input type="text" name="mobile" placeholder="Mobile Number" required>
+    <input type="text" name="pickup" placeholder="Pickup Location" required>
+    <input type="text" name="drop" placeholder="Drop Location" required>
+    <input type="date" name="date" required>
+    <input type="time" name="time" required>
+
+    <select name="vehicle" required>
+        <option value="">Select Vehicle</option>
+        {% for v in vehicles %}
+            <option value="{{ v.vehicle_name }} - {{ v.vehicle_number }}">
+                {{ v.vehicle_name }} - {{ v.vehicle_number }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <input type="number" name="amount" placeholder="Amount" required>
+
+    <select name="payment_status">
+        <option value="Pending">Pending</option>
+        <option value="Paid">Paid</option>
+    </select>
+
+    <button type="submit">Save Booking</button>
+</form>
+
+</body>
+</html>
