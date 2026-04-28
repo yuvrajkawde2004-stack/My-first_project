@@ -1,8 +1,0 @@
-travel_owner_app/
-│-- app.py
-│-- requirements.txt
-│-- templates/
-│   │-- login.html
-│   │-- dashboard.html
-│   │-- add_booking.html
-│   │-- vehicles.html
