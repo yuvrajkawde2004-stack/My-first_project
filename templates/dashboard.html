@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Travel Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f8f8f8;
+            padding: 20px;
+        }
+        .nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            background: blue;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .card {
+            display: inline-block;
+            background: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+            width: 200px;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Travel Owner Dashboard</h1>
+
+<div class="nav">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/add-booking">Add Booking</a>
+    <a href="/vehicles">Vehicles</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="card">
+    <h3>Total Bookings</h3>
+    <h2>{{ total_bookings }}</h2>
+</div>
+
+<div class="card">
+    <h3>Total Vehicles</h3>
+    <h2>{{ total_vehicles }}</h2>
+</div>
+
+<div class="card">
+    <h3>Pending Payments</h3>
+    <h2>{{ pending_payments }}</h2>
+</div>
+
+<h2>Booking List</h2>
+
+<table>
+    <tr>
+        <th>Customer</th>
+        <th>Mobile</th>
+        <th>Pickup</th>
+        <th>Drop</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Vehicle</th>
+        <th>Amount</th>
+        <th>Payment</th>
+    </tr>
+
+    {% for b in bookings %}
+    <tr>
+        <td>{{ b.customer_name }}</td>
+        <td>{{ b.mobile }}</td>
+        <td>{{ b.pickup }}</td>
+        <td>{{ b.drop }}</td>
+        <td>{{ b.date }}</td>
+        <td>{{ b.time }}</td>
+        <td>{{ b.vehicle }}</td>
+        <td>{{ b.amount }}</td>
+        <td>{{ b.payment_status }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
