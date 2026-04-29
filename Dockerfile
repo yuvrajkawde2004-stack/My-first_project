@@ -1,4 +1,6 @@
-docker stop goofy_lalande
-docker rm goofy_lalande
-docker build -t travel-owner-app:latest .
-docker run -d -p 5000:5000 travel-owner-app:latest
+FROM python:3.10
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+EXPOSE 5000
+CMD ["python", "app.py"]
