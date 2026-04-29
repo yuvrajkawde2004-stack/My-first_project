@@ -57,15 +57,9 @@
     <h2>All Bookings</h2>
 
 {% for b in bookings %}
-<div class="card">
+<div class="booking-card">
     <p><b>Customer:</b> {{ b[1] }}</p>
-    <p><b>Contact:</b> {{ b[2] }}</p>
-    <p><b>Pickup:</b> {{ b[3] }}</p>
-    <p><b>Drop:</b> {{ b[4] }}</p>
-    <p><b>Date:</b> {{ b[5] }}</p>
-    <p><b>Time:</b> {{ b[6] }}</p>
-    <p><b>Vehicle:</b> {{ b[7] }}</p>
-    <p><b>Driver:</b> {{ b[8] }}</p>
+    <p><b>Pickup:</b> {{ b[3] }} → {{ b[4] }}</p>
     <p><b>Total:</b> ₹{{ b[9] }}</p>
     <p><b>Paid:</b> ₹{{ b[10] }}</p>
     <p><b>Status:</b> {{ b[11] }}</p>
@@ -77,8 +71,7 @@
         <span class="confirmed-badge">✅ Confirmed</span>
     {% endif %}
 </div>
-{% endfor %}  </div>
-
+{% endfor %}
 </div>
 
 <script>
