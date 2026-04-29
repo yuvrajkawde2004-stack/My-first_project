@@ -65,7 +65,7 @@
     <p><b>Status:</b> {{ b[11] }}</p>
 
     {% if b[11] != "Confirmed" %}
-        <a href="/edit/{{ b[0] }}" class="edit-btn">✏️ Edit</a>
+      <a href="/edit/{{ b[0] }}" class="edit-btn">✏️ Edit</a>
         <a href="/confirm/{{ b[0] }}" class="confirm-btn">✅ Confirm Booking</a>
     {% else %}
         <span class="confirmed-badge">✅ Confirmed</span>
