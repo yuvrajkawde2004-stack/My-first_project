@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Owner Profile Dashboard</h2>
+
+<div class="stats">
+    <div class="stat">
+        <h3>Total</h3>
+        <p>₹ {{ total_payment }}</p>
+    </div>
+    <div class="stat">
+        <h3>Paid</h3>
+        <p>₹ {{ paid_amount }}</p>
+    </div>
+    <div class="stat">
+        <h3>Pending</h3>
+        <p>₹ {{ pending_amount }}</p>
+    </div>
+    <div class="stat">
+        <h3>Maintenance</h3>
+        <p>₹ {{ maintenance_amount }}</p>
+    </div>
+    <div class="stat">
+        <h3>Final Profit</h3>
+        <p>₹ {{ final_profit }}</p>
+    </div>
+</div>
+
+<br>
+
+<a class="btn" href="/add">+ Add Booking</a>
+<a class="btn green" href="/maintenance">+ Add Maintenance</a>
+
+<br><br>
+
+<div class="card">
+    <h3>All Bookings</h3>
+
+    <table>
+        <tr>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Pickup</th>
+            <th>Drop</th>
+            <th>Date</th>
+            <th>Vehicle</th>
+            <th>Driver</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.customer_name }}</td>
+            <td>{{ b.contact_number }}</td>
+            <td>{{ b.pickup }}</td>
+            <td>{{ b.drop_location }}</td>
+            <td>{{ b.date }} {{ b.time }}</td>
+            <td>{{ b.vehicle_number }}</td>
+            <td>{{ b.driver_name }}</td>
+            <td>₹ {{ b.total_payment }}</td>
+            <td>₹ {{ b.paid_amount }}</td>
+            <td>{{ b.payment_status }}</td>
+            <td>
+                <a class="btn" href="/edit/{{ b.id }}">Edit</a>
+                <a class="btn danger" href="/delete/{{ b.id }}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h3>Maintenance List</h3>
+
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Vehicle</th>
+            <th>Amount</th>
+            <th>Date</th>
+        </tr>
+
+        {% for m in maintenance %}
+        <tr>
+            <td>{{ m.title }}</td>
+            <td>{{ m.vehicle_number }}</td>
+            <td>₹ {{ m.amount }}</td>
+            <td>{{ m.date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
