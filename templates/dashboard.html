@@ -56,25 +56,22 @@
   <div class="booking-list">
     <h2>All Bookings</h2>
 
-    {% for b in bookings %}
-    <div class="booking-card">
-      <div class="top">
-        <strong>{{ b.pickup }} → {{ b.drop }}</strong>
-        <span class="{{ b.status|lower }}">{{ b.status }}</span>
-      </div>
+{% for b in bookings %}
+<div class="card">
+    <p><b>Customer:</b> {{ b[1] }}</p>
+    <p><b>Pickup:</b> {{ b[3] }} → {{ b[4] }}</p>
+    <p><b>Total:</b> ₹{{ b[9] }}</p>
+    <p><b>Paid:</b> ₹{{ b[10] }}</p>
+    <p><b>Status:</b> {{ b[11] }}</p>
 
-      <p>💰 ₹{{ b.amount }}</p>
-      <p>👨 Driver: {{ b.driver }}</p>
-      <p>📞 {{ b.contact }}</p>
-      <p>🚗 {{ b.vehicle }}</p>
-
-      <div class="actions">
-        <a href="/edit/{{ b.id }}">✏️ Edit</a>
-        <a href="/paid/{{ b.id }}">✅ Paid</a>
-        <a href="/delete/{{ b.id }}" class="delete">🗑 Delete</a>
-      </div>
-    </div>
-    {% endfor %}
+    {% if b[11] != "Confirmed" %}
+        <a href="/edit/{{ b[0] }}" class="edit-btn">✏️ Edit</a>
+        <a href="/confirm/{{ b[0] }}" class="confirm-btn">✅ Confirm Booking</a>
+    {% else %}
+        <span class="confirmed-badge">✅ Confirmed</span>
+    {% endif %}
+</div>
+{% endfor %}
   </div>
 
 </div>
