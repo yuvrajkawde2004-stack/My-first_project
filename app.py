@@ -1,20 +1,25 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "travel_owner_secret"
 
-USERNAME = "admin"
-PASSWORD = "1234"
+DATABASE = "travel.db"
 
-def db():
-    conn = sqlite3.connect("travel.db")
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def init_db():
-    conn = db()
-    conn.execute("""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             customer_name TEXT,
@@ -27,190 +32,246 @@ def init_db():
             driver_name TEXT,
             total_payment REAL,
             paid_amount REAL,
-            payment_status TEXT
+            status TEXT DEFAULT 'Pending'
         )
     """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS maintenance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            vehicle_number TEXT,
-            amount REAL,
-            date TEXT
-        )
-    """)
+
     conn.commit()
     conn.close()
 
-@app.route("/", methods=["GET", "POST"])
-def login():
+
+init_db()
+
+
+@app.route("/")
+def home():
+    return redirect("/login")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM users")
+    user_count = cursor.fetchone()[0]
+
+    if user_count > 0:
+        conn.close()
+        return redirect("/login")
+
     if request.method == "POST":
-        if request.form["username"] == USERNAME and request.form["password"] == PASSWORD:
-            session["user"] = USERNAME
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, password)
+        )
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/login")
+
+    conn.close()
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM users")
+    user_count = cursor.fetchone()[0]
+
+    if user_count == 0:
+        conn.close()
+        return redirect("/register")
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        cursor.execute(
+            "SELECT * FROM users WHERE username = ? AND password = ?",
+            (username, password)
+        )
+        user = cursor.fetchone()
+
+        conn.close()
+
+        if user:
+            session["user"] = username
             return redirect("/dashboard")
-        return render_template("login.html", error="Wrong username or password")
+        else:
+            return render_template("login.html", error="Wrong username or password")
+
+    conn.close()
     return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
 
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
-        return redirect("/")
+        return redirect("/login")
 
-    conn = db()
-    bookings = conn.execute("SELECT * FROM bookings ORDER BY id DESC").fetchall()
-    maintenance = conn.execute("SELECT * FROM maintenance ORDER BY id DESC").fetchall()
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
-    total_payment = sum([b["total_payment"] or 0 for b in bookings])
-    paid_amount = sum([b["paid_amount"] or 0 for b in bookings])
+    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
+    bookings = cursor.fetchall()
+
+    cursor.execute("SELECT SUM(total_payment), SUM(paid_amount) FROM bookings")
+    result = cursor.fetchone()
+
+    total_payment = result[0] if result[0] else 0
+    paid_amount = result[1] if result[1] else 0
     pending_amount = total_payment - paid_amount
-    maintenance_amount = sum([m["amount"] or 0 for m in maintenance])
-    final_profit = paid_amount - maintenance_amount
 
     conn.close()
 
     return render_template(
         "dashboard.html",
         bookings=bookings,
-        maintenance=maintenance,
         total_payment=total_payment,
         paid_amount=paid_amount,
-        pending_amount=pending_amount,
-        maintenance_amount=maintenance_amount,
-        final_profit=final_profit
+        pending_amount=pending_amount
     )
 
-@app.route("/add", methods=["GET", "POST"])
+
+@app.route("/add_booking", methods=["GET", "POST"])
 def add_booking():
     if "user" not in session:
-        return redirect("/")
+        return redirect("/login")
 
     if request.method == "POST":
-        conn = db()
-        total = float(request.form.get("total_payment") or request.form.get("amount") or 0)
-        paid = float(request.form.get("paid_amount") or request.form.get("paid") or 0)
-        status = "Paid" if paid >= total else "Pending"
+        customer_name = request.form.get("customer_name")
+        contact_number = request.form.get("contact_number")
+        pickup = request.form.get("pickup")
+        drop_location = request.form.get("drop_location")
+        date = request.form.get("date")
+        time = request.form.get("time")
+        vehicle_number = request.form.get("vehicle_number")
+        driver_name = request.form.get("driver_name")
 
-        conn.execute("""
-            INSERT INTO bookings
-            (customer_name, contact_number, pickup, drop_location, date, time,
-             vehicle_number, driver_name, total_payment, paid_amount, payment_status)
+        total_payment = float(request.form.get("total_payment") or 0)
+        paid_amount = float(request.form.get("paid_amount") or 0)
+
+        status = "Paid" if paid_amount >= total_payment else "Pending"
+
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO bookings (
+                customer_name, contact_number, pickup, drop_location,
+                date, time, vehicle_number, driver_name,
+                total_payment, paid_amount, status
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            request.form["customer_name"],
-            request.form["contact_number"],
-            request.form["pickup"],
-            request.form["drop_location"],
-            request.form["date"],
-            request.form["time"],
-            request.form["vehicle_number"],
-            request.form["driver_name"],
-            total,
-            paid,
-            status
+            customer_name, contact_number, pickup, drop_location,
+            date, time, vehicle_number, driver_name,
+            total_payment, paid_amount, status
         ))
+
         conn.commit()
         conn.close()
+
         return redirect("/dashboard")
 
     return render_template("add_booking.html")
 
+
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_booking(id):
     if "user" not in session:
-        return redirect("/")
+        return redirect("/login")
 
-    conn = db()
-    booking = conn.execute("SELECT * FROM bookings WHERE id=?", (id,)).fetchone()
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM bookings WHERE id = ?", (id,))
+    booking = cursor.fetchone()
+
+    if booking is None:
+        conn.close()
+        return redirect("/dashboard")
+
+    if booking[11] == "Confirmed":
+        conn.close()
+        return redirect("/dashboard")
 
     if request.method == "POST":
-        customer_name = request.form["customer_name"]
-        contact_number = request.form["contact_number"]
-        pickup = request.form["pickup"]
-        drop_location = request.form["drop_location"]
-        date = request.form["date"]
-        time = request.form["time"]
-        vehicle_number = request.form["vehicle_number"]
-        driver_name = request.form["driver_name"]
+        customer_name = request.form.get("customer_name")
+        contact_number = request.form.get("contact_number")
+        pickup = request.form.get("pickup")
+        drop_location = request.form.get("drop_location")
+        date = request.form.get("date")
+        time = request.form.get("time")
+        vehicle_number = request.form.get("vehicle_number")
+        driver_name = request.form.get("driver_name")
 
-        total = float(request.form["total_payment"])
-        paid = float(request.form["paid_amount"])
+        total_payment = float(request.form.get("total_payment") or 0)
+        paid_amount = float(request.form.get("paid_amount") or 0)
 
-        # ❌ validation
-        if paid > total:
-            conn.close()
-            return render_template("edit_booking.html",
-                                   booking=booking,
-                                   error="Paid amount cannot be greater than Total ❌")
+        status = "Paid" if paid_amount >= total_payment else "Pending"
 
-        # ✔️ status auto
-        status = "Paid" if paid >= total else "Pending"
-
-        conn.execute("""
+        cursor.execute("""
             UPDATE bookings SET
-            customer_name=?, contact_number=?, pickup=?, drop_location=?,
-            date=?, time=?, vehicle_number=?, driver_name=?,
-            total_payment=?, paid_amount=?, payment_status=?
-            total = float(request.form["total_payment"])
-            WHERE id=?
+                customer_name = ?,
+                contact_number = ?,
+                pickup = ?,
+                drop_location = ?,
+                date = ?,
+                time = ?,
+                vehicle_number = ?,
+                driver_name = ?,
+                total_payment = ?,
+                paid_amount = ?,
+                status = ?
+            WHERE id = ?
         """, (
-            customer_name,
-            contact_number,
-            pickup,
-            drop_location,
-            date,
-            time,
-            vehicle_number,
-            driver_name,
-            total,
-            paid,
-            status,
-            id
+            customer_name, contact_number, pickup, drop_location,
+            date, time, vehicle_number, driver_name,
+            total_payment, paid_amount, status, id
         ))
 
         conn.commit()
         conn.close()
+
         return redirect("/dashboard")
 
     conn.close()
     return render_template("edit_booking.html", booking=booking)
-@app.route("/delete/<int:id>")
-def delete_booking(id):
-    if "user" not in session:
-        return redirect("/")
 
-    conn = db()
-    conn.execute("DELETE FROM bookings WHERE id=?", (id,))
+
+@app.route("/confirm/<int:id>")
+def confirm_booking(id):
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE bookings SET status = ? WHERE id = ?",
+        ("Confirmed", id)
+    )
+
     conn.commit()
     conn.close()
+
     return redirect("/dashboard")
 
-@app.route("/maintenance", methods=["GET", "POST"])
-def maintenance():
-    if "user" not in session:
-        return redirect("/")
-
-    if request.method == "POST":
-        conn = db()
-        conn.execute("""
-            INSERT INTO maintenance (title, vehicle_number, amount, date)
-            VALUES (?, ?, ?, ?)
-        """, (
-            request.form["title"],
-            request.form["vehicle_number"],
-            float(request.form["amount"]),
-            request.form["date"]
-        ))
-        conn.commit()
-        conn.close()
-        return redirect("/dashboard")
-
-    return render_template("maintenance.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)
