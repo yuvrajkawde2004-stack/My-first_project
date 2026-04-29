@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Add Vehicle Maintenance</h2>
+
+    <form method="POST">
+        <input name="title" placeholder="Maintenance Title e.g. Diesel, Servicing, Tyre" required>
+        <input name="vehicle_number" placeholder="Vehicle Number" required>
+        <input type="number" name="amount" placeholder="Maintenance Amount" required>
+        <input type="date" name="date" required>
+
+        <button>Add Maintenance</button>
+    </form>
+</div>
+
+{% endblock %}
