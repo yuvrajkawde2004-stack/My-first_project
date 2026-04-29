@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Travel Owner App</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #f4f7fb;
+        }
+        .nav {
+            background: #111827;
+            color: white;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .container {
+            padding: 25px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px #ddd;
+            margin-bottom: 20px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button, .btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .danger {
+            background: #dc2626;
+        }
+        .green {
+            background: #16a34a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #e5e7eb;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        .stat {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div><b>Travel Owner App</b></div>
+    <div>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/add">Add Booking</a>
+        <a href="/maintenance">Maintenance</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
