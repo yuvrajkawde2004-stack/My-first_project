@@ -1,29 +1,52 @@
-cat > edit_booking.html <<'EOF'
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Booking</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<nav>
+    <h2>Travel Owner App</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/add">Add Booking</a>
+    <a href="/maintenance">Maintenance</a>
+    <a href="/logout">Logout</a>
+</nav>
 
 <div class="card">
-    <h2>Edit Booking</h2>
-
-    {% if error %}
-    <p style="color:red; font-weight:bold;">{{ error }}</p>
-    {% endif %}
+    <h1>Edit Booking</h1>
 
     <form method="POST">
-        <input name="customer_name" value="{{ booking.customer_name }}" required>
-        <input name="contact_number" value="{{ booking.contact_number }}" required>
-        <input name="pickup" value="{{ booking.pickup }}" required>
-        <input name="drop_location" value="{{ booking.drop_location }}" required>
-        <input type="date" name="date" value="{{ booking.date }}" required>
-        <input type="time" name="time" value="{{ booking.time }}" required>
-        <input name="vehicle_number" value="{{ booking.vehicle_number }}" required>
-        <input name="driver_name" value="{{ booking.driver_name }}" required>
-        <input type="number" name="total_payment" value="{{ booking.total_payment }}" required>
-        <input type="number" name="paid_amount" value="{{ booking.paid_amount }}" required>
+        {% if booking.status == "Confirmed" %}
+            <label>Amount Edit Only</label>
+            <input type="number" name="amount" value="{{ booking.amount }}" required>
 
-        <button>Update Booking</button>
+            <input type="hidden" name="pickup" value="{{ booking.pickup }}">
+            <input type="hidden" name="drop_location" value="{{ booking.drop_location }}">
+            <input type="hidden" name="contact" value="{{ booking.contact }}">
+            <input type="hidden" name="vehicle" value="{{ booking.vehicle }}">
+            <input type="hidden" name="date" value="{{ booking.date }}">
+            <input type="hidden" name="time" value="{{ booking.time }}">
+            <input type="hidden" name="driver" value="{{ booking.driver }}">
+            <input type="hidden" name="status" value="{{ booking.status }}">
+        {% else %}
+            <input type="text" name="pickup" value="{{ booking.pickup }}" placeholder="Pickup" required>
+            <input type="text" name="drop_location" value="{{ booking.drop_location }}" placeholder="Drop" required>
+            <input type="text" name="contact" value="{{ booking.contact }}" placeholder="Contact" required>
+            <input type="text" name="vehicle" value="{{ booking.vehicle }}" placeholder="Vehicle Number" required>
+            <input type="date" name="date" value="{{ booking.date }}" required>
+            <input type="time" name="time" value="{{ booking.time }}" required>
+            <input type="text" name="driver" value="{{ booking.driver }}" placeholder="Driver Name" required>
+            <input type="number" name="amount" value="{{ booking.amount }}" placeholder="Amount" required>
+
+            <select name="status">
+                <option value="Pending" {% if booking.status=="Pending" %}selected{% endif %}>Pending</option>
+                <option value="Paid" {% if booking.status=="Paid" %}selected{% endif %}>Paid</option>
+            </select>
+        {% endif %}
+
+        <button type="submit">Update Booking</button>
     </form>
 </div>
-
-{% endblock %}
-EOF
+</body>
+</html>
