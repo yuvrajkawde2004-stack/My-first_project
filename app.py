@@ -150,6 +150,7 @@ def edit_booking(id):
             customer_name=?, contact_number=?, pickup=?, drop_location=?,
             date=?, time=?, vehicle_number=?, driver_name=?,
             total_payment=?, paid_amount=?, payment_status=?
+            total = float(request.form["total_payment"])
             WHERE id=?
         """, (
             customer_name,
