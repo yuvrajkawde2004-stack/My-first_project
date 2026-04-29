@@ -123,8 +123,26 @@ def edit_booking(id):
     booking = conn.execute("SELECT * FROM bookings WHERE id=?", (id,)).fetchone()
 
     if request.method == "POST":
+        customer_name = request.form["customer_name"]
+        contact_number = request.form["contact_number"]
+        pickup = request.form["pickup"]
+        drop_location = request.form["drop_location"]
+        date = request.form["date"]
+        time = request.form["time"]
+        vehicle_number = request.form["vehicle_number"]
+        driver_name = request.form["driver_name"]
+
         total = float(request.form["total_payment"])
         paid = float(request.form["paid_amount"])
+
+        # ❌ validation
+        if paid > total:
+            conn.close()
+            return render_template("edit_booking.html",
+                                   booking=booking,
+                                   error="Paid amount cannot be greater than Total ❌")
+
+        # ✔️ status auto
         status = "Paid" if paid >= total else "Pending"
 
         conn.execute("""
@@ -134,26 +152,26 @@ def edit_booking(id):
             total_payment=?, paid_amount=?, payment_status=?
             WHERE id=?
         """, (
-            request.form["customer_name"],
-            request.form["contact_number"],
-            request.form["pickup"],
-            request.form["drop_location"],
-            request.form["date"],
-            request.form["time"],
-            request.form["vehicle_number"],
-            request.form["driver_name"],
+            customer_name,
+            contact_number,
+            pickup,
+            drop_location,
+            date,
+            time,
+            vehicle_number,
+            driver_name,
             total,
             paid,
             status,
             id
         ))
+
         conn.commit()
         conn.close()
         return redirect("/dashboard")
 
     conn.close()
     return render_template("edit_booking.html", booking=booking)
-
 @app.route("/delete/<int:id>")
 def delete_booking(id):
     if "user" not in session:
