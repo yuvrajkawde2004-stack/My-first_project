@@ -896,6 +896,7 @@ venv/
 '''
 
 files["README.md"] = r'''
+nano app.py
 # Travel Owner Pro App
 
 Python Flask + SQLite app for travel booking owners.
