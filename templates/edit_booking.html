@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Edit Booking</h2>
+
+    <form method="POST">
+        <input name="customer_name" value="{{ booking.customer_name }}" required>
+        <input name="contact_number" value="{{ booking.contact_number }}" required>
+        <input name="pickup" value="{{ booking.pickup }}" required>
+        <input name="drop_location" value="{{ booking.drop_location }}" required>
+        <input type="date" name="date" value="{{ booking.date }}" required>
+        <input type="time" name="time" value="{{ booking.time }}" required>
+        <input name="vehicle_number" value="{{ booking.vehicle_number }}" required>
+        <input name="driver_name" value="{{ booking.driver_name }}" required>
+        <input type="number" name="total_payment" value="{{ booking.total_payment }}" required>
+        <input type="number" name="paid_amount" value="{{ booking.paid_amount }}" required>
+
+        <button>Update Booking</button>
+    </form>
+</div>
+
+{% endblock %}
