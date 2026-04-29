@@ -1,8 +1,13 @@
+cat > edit_booking.html <<'EOF'
 {% extends "base.html" %}
 {% block content %}
 
 <div class="card">
     <h2>Edit Booking</h2>
+
+    {% if error %}
+    <p style="color:red; font-weight:bold;">{{ error }}</p>
+    {% endif %}
 
     <form method="POST">
         <input name="customer_name" value="{{ booking.customer_name }}" required>
@@ -21,3 +26,4 @@
 </div>
 
 {% endblock %}
+EOF
