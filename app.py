@@ -1,277 +1,146 @@
 from flask import Flask, render_template, request, redirect, session
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = "travel_owner_secret"
+app.secret_key = "secret123"
 
-DATABASE = "travel.db"
+# Database config
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///travel.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+db = SQLAlchemy(app)
 
-def init_db():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bookings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_name TEXT,
-            contact_number TEXT,
-            pickup TEXT,
-            drop_location TEXT,
-            date TEXT,
-            time TEXT,
-            vehicle_number TEXT,
-            driver_name TEXT,
-            total_payment REAL,
-            paid_amount REAL,
-            status TEXT DEFAULT 'Pending'
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+# ------------------ MODEL ------------------
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pickup = db.Column(db.String(100))
+    drop_location = db.Column(db.String(100))
+    contact = db.Column(db.String(20))
+    vehicle = db.Column(db.String(50))
+    date = db.Column(db.String(20))
+    time = db.Column(db.String(20))
+    driver = db.Column(db.String(100))
+    amount = db.Column(db.Integer)
+    status = db.Column(db.String(20), default="Pending")
 
 
-init_db()
-
-
-@app.route("/")
-def home():
-    return redirect("/login")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM users")
-    user_count = cursor.fetchone()[0]
-
-    if user_count > 0:
-        conn.close()
-        return redirect("/login")
-
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password)
-        )
-
-        conn.commit()
-        conn.close()
-
-        return redirect("/login")
-
-    conn.close()
-    return render_template("register.html")
-
-
-@app.route("/login", methods=["GET", "POST"])
+# ------------------ LOGIN ------------------
+@app.route("/", methods=["GET", "POST"])
 def login():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM users")
-    user_count = cursor.fetchone()[0]
-
-    if user_count == 0:
-        conn.close()
-        return redirect("/register")
-
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = request.form["username"]
+        password = request.form["password"]
 
-        cursor.execute(
-            "SELECT * FROM users WHERE username = ? AND password = ?",
-            (username, password)
-        )
-        user = cursor.fetchone()
-
-        conn.close()
-
-        if user:
+        if username == "admin" and password == "admin":
             session["user"] = username
             return redirect("/dashboard")
         else:
-            return render_template("login.html", error="Wrong username or password")
+            return "Login Failed"
 
-    conn.close()
-    return render_template("login.html")
+    return """
+    <h2>Login</h2>
+    <form method="POST">
+        <input name="username" placeholder="Username"><br><br>
+        <input name="password" type="password" placeholder="Password"><br><br>
+        <button type="submit">Login</button>
+    </form>
+    """
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
+# ------------------ DASHBOARD ------------------
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
-        return redirect("/login")
+        return redirect("/")
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
+    bookings = Booking.query.all()
 
-    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
-    bookings = cursor.fetchall()
+    total_paid = sum(b.amount for b in bookings if b.status == "Paid")
+    total_pending = sum(b.amount for b in bookings if b.status == "Pending")
 
-    cursor.execute("SELECT SUM(total_payment), SUM(paid_amount) FROM bookings")
-    result = cursor.fetchone()
-
-    total_payment = result[0] if result[0] else 0
-    paid_amount = result[1] if result[1] else 0
-    pending_amount = total_payment - paid_amount
-
-    conn.close()
-
-    return render_template(
-        "dashboard.html",
-        bookings=bookings,
-        total_payment=total_payment,
-        paid_amount=paid_amount,
-        pending_amount=pending_amount
-    )
+    return render_template("dashboard.html",
+                           bookings=bookings,
+                           paid=total_paid,
+                           pending=total_pending)
 
 
-@app.route("/add_booking", methods=["GET", "POST"])
+# ------------------ ADD BOOKING ------------------
+@app.route("/add", methods=["GET", "POST"])
 def add_booking():
-    if "user" not in session:
-        return redirect("/login")
-
     if request.method == "POST":
-        customer_name = request.form.get("customer_name")
-        contact_number = request.form.get("contact_number")
-        pickup = request.form.get("pickup")
-        drop_location = request.form.get("drop_location")
-        date = request.form.get("date")
-        time = request.form.get("time")
-        vehicle_number = request.form.get("vehicle_number")
-        driver_name = request.form.get("driver_name")
-
-        total_payment = float(request.form.get("total_payment") or 0)
-        paid_amount = float(request.form.get("paid_amount") or 0)
-
-        status = "Paid" if paid_amount >= total_payment else "Pending"
-
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO bookings (
-                customer_name, contact_number, pickup, drop_location,
-                date, time, vehicle_number, driver_name,
-                total_payment, paid_amount, status
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            customer_name, contact_number, pickup, drop_location,
-            date, time, vehicle_number, driver_name,
-            total_payment, paid_amount, status
-        ))
-
-        conn.commit()
-        conn.close()
-
+        new = Booking(
+            pickup=request.form["pickup"],
+            drop_location=request.form["drop_location"],
+            contact=request.form["contact"],
+            vehicle=request.form["vehicle"],
+            date=request.form["date"],
+            time=request.form["time"],
+            driver=request.form["driver"],
+            amount=request.form["amount"],
+            status=request.form["status"]
+        )
+        db.session.add(new)
+        db.session.commit()
         return redirect("/dashboard")
 
     return render_template("add_booking.html")
 
 
+# ------------------ EDIT ------------------
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_booking(id):
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM bookings WHERE id = ?", (id,))
-    booking = cursor.fetchone()
-
-    if booking is None:
-        conn.close()
-        return redirect("/dashboard")
-
-    if booking[11] == "Confirmed":
-        conn.close()
-        return redirect("/dashboard")
+    booking = Booking.query.get_or_404(id)
 
     if request.method == "POST":
-        customer_name = request.form.get("customer_name")
-        contact_number = request.form.get("contact_number")
-        pickup = request.form.get("pickup")
-        drop_location = request.form.get("drop_location")
-        date = request.form.get("date")
-        time = request.form.get("time")
-        vehicle_number = request.form.get("vehicle_number")
-        driver_name = request.form.get("driver_name")
 
-        total_payment = float(request.form.get("total_payment") or 0)
-        paid_amount = float(request.form.get("paid_amount") or 0)
+        # Confirm झाल्यावर फक्त amount edit
+        if booking.status == "Confirmed":
+            booking.amount = request.form["amount"]
 
-        status = "Paid" if paid_amount >= total_payment else "Pending"
+        else:
+            booking.pickup = request.form["pickup"]
+            booking.drop_location = request.form["drop_location"]
+            booking.contact = request.form["contact"]
+            booking.vehicle = request.form["vehicle"]
+            booking.date = request.form["date"]
+            booking.time = request.form["time"]
+            booking.driver = request.form["driver"]
+            booking.amount = request.form["amount"]
+            booking.status = request.form["status"]
 
-        cursor.execute("""
-            UPDATE bookings SET
-                customer_name = ?,
-                contact_number = ?,
-                pickup = ?,
-                drop_location = ?,
-                date = ?,
-                time = ?,
-                vehicle_number = ?,
-                driver_name = ?,
-                total_payment = ?,
-                paid_amount = ?,
-                status = ?
-            WHERE id = ?
-        """, (
-            customer_name, contact_number, pickup, drop_location,
-            date, time, vehicle_number, driver_name,
-            total_payment, paid_amount, status, id
-        ))
-
-        conn.commit()
-        conn.close()
-
+        db.session.commit()
         return redirect("/dashboard")
 
-    conn.close()
     return render_template("edit_booking.html", booking=booking)
 
 
+# ------------------ CONFIRM ------------------
 @app.route("/confirm/<int:id>")
 def confirm_booking(id):
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "UPDATE bookings SET status = ? WHERE id = ?",
-        ("Confirmed", id)
-    )
-
-    conn.commit()
-    conn.close()
-
+    booking = Booking.query.get_or_404(id)
+    booking.status = "Confirmed"
+    db.session.commit()
     return redirect("/dashboard")
 
 
+# ------------------ DELETE ------------------
+@app.route("/delete/<int:id>")
+def delete_booking(id):
+    booking = Booking.query.get_or_404(id)
+    db.session.delete(booking)
+    db.session.commit()
+    return redirect("/dashboard")
+
+
+# ------------------ LOGOUT ------------------
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect("/")
+
+
+# ------------------ RUN ------------------
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(host="0.0.0.0", port=5000, debug=True)
