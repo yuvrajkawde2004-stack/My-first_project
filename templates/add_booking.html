@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Add Booking</h2>
+
+    <form method="POST">
+        <input name="customer_name" placeholder="Customer Name" required>
+        <input name="contact_number" placeholder="Contact Number" required>
+        <input name="pickup" placeholder="Pickup Location" required>
+        <input name="drop_location" placeholder="Drop Location" required>
+        <input type="date" name="date" required>
+        <input type="time" name="time" required>
+        <input name="vehicle_number" placeholder="Vehicle Number" required>
+        <input name="driver_name" placeholder="Driver Name" required>
+        <input type="number" name="total_payment" placeholder="Total Payment" required>
+        <input type="number" name="paid_amount" placeholder="Paid Amount" required>
+
+        <button>Add Booking</button>
+    </form>
+</div>
+
+{% endblock %}
