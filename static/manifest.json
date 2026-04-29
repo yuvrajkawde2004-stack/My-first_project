@@ -1,0 +1,9 @@
+{
+  "name": "Travel Owner",
+  "short_name": "TravelOwner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef3ff",
+  "theme_color": "#2563eb",
+  "icons": []
+}
