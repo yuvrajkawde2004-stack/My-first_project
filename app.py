@@ -86,7 +86,7 @@ def add_booking():
 
     if request.method == "POST":
         conn = db()
-        total = float(request.form["total_payment"])
+        total = float(request.form.get("total_payment") or request.form.get("amount") or 0)
         paid = float(request.form["paid_amount"])
         status = "Paid" if paid >= total else "Pending"
 
