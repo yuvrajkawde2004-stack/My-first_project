@@ -894,8 +894,6 @@ travel.db
 .env
 venv/
 '''
-
-files["README.md"] = r'''
 nano app.py
 # Travel Owner Pro App
 
