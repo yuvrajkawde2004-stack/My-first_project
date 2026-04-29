@@ -894,7 +894,6 @@ travel.db
 .env
 venv/
 '''
-nano app.py
 # Travel Owner Pro App
 
 Python Flask + SQLite app for travel booking owners.
