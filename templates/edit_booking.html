@@ -1,23 +1,58 @@
-{% extends "base.html" %}
-{% block content %}
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit_booking(id):
+    if "user" not in session:
+        return redirect("/")
 
-<div class="card">
-    <h2>Edit Booking</h2>
+    conn = db()
+    booking = conn.execute("SELECT * FROM bookings WHERE id=?", (id,)).fetchone()
 
-    <form method="POST">
-        <input name="customer_name" value="{{ booking.customer_name }}" required>
-        <input name="contact_number" value="{{ booking.contact_number }}" required>
-        <input name="pickup" value="{{ booking.pickup }}" required>
-        <input name="drop_location" value="{{ booking.drop_location }}" required>
-        <input type="date" name="date" value="{{ booking.date }}" required>
-        <input type="time" name="time" value="{{ booking.time }}" required>
-        <input name="vehicle_number" value="{{ booking.vehicle_number }}" required>
-        <input name="driver_name" value="{{ booking.driver_name }}" required>
-        <input type="number" name="total_payment" value="{{ booking.total_payment }}" required>
-        <input type="number" name="paid_amount" value="{{ booking.paid_amount }}" required>
+    if request.method == "POST":
+        customer_name = request.form["customer_name"]
+        contact_number = request.form["contact_number"]
+        pickup = request.form["pickup"]
+        drop_location = request.form["drop_location"]
+        date = request.form["date"]
+        time = request.form["time"]
+        vehicle_number = request.form["vehicle_number"]
+        driver_name = request.form["driver_name"]
 
-        <button>Update Booking</button>
-    </form>
-</div>
+        total = float(request.form["total_payment"])
+        paid = float(request.form["paid_amount"])
 
-{% endblock %}
+        # ❌ VALIDATION (IMPORTANT)
+        if paid > total:
+            conn.close()
+            return render_template("edit_booking.html",
+                                   booking=booking,
+                                   error="Paid amount cannot be greater than Total ❌")
+
+        # ✔️ STATUS AUTO
+        status = "Paid" if paid >= total else "Pending"
+
+        conn.execute("""
+            UPDATE bookings SET
+            customer_name=?, contact_number=?, pickup=?, drop_location=?,
+            date=?, time=?, vehicle_number=?, driver_name=?,
+            total_payment=?, paid_amount=?, payment_status=?
+            WHERE id=?
+        """, (
+            customer_name,
+            contact_number,
+            pickup,
+            drop_location,
+            date,
+            time,
+            vehicle_number,
+            driver_name,
+            total,
+            paid,
+            status,
+            id
+        ))
+
+        conn.commit()
+        conn.close()
+        return redirect("/dashboard")
+
+    conn.close()
+    return render_template("edit_booking.html", booking=booking)
