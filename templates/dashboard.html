@@ -1,97 +1,89 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Travel Owner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h2>Owner Profile Dashboard</h2>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+</head>
+<body>
 
-<div class="stats">
-    <div class="stat">
-        <h3>Total</h3>
-        <p>₹ {{ total_payment }}</p>
+<div class="app">
+
+  <div class="header">
+    <h1>🚖 Travel Owner</h1>
+    <p>Booking, Payment & Maintenance</p>
+  </div>
+
+  <div class="cards">
+    <div class="card green">
+      <h3>Total Paid</h3>
+      <h2>₹{{ paid_total }}</h2>
     </div>
-    <div class="stat">
-        <h3>Paid</h3>
-        <p>₹ {{ paid_amount }}</p>
+
+    <div class="card red">
+      <h3>Pending</h3>
+      <h2>₹{{ pending_total }}</h2>
     </div>
-    <div class="stat">
-        <h3>Pending</h3>
-        <p>₹ {{ pending_amount }}</p>
+
+    <div class="card blue">
+      <h3>Final Amount</h3>
+      <h2>₹{{ final_amount }}</h2>
     </div>
-    <div class="stat">
-        <h3>Maintenance</h3>
-        <p>₹ {{ maintenance_amount }}</p>
+  </div>
+
+  <div class="form-box">
+    <h2>Add Booking</h2>
+
+    <form method="POST" action="/add">
+      <input type="text" name="pickup" placeholder="Pickup Location" required>
+      <input type="text" name="drop" placeholder="Drop Location" required>
+      <input type="number" name="amount" placeholder="Amount ₹" required>
+      <input type="text" name="driver" placeholder="Driver Name" required>
+      <input type="text" name="contact" placeholder="Contact Number" required>
+      <input type="text" name="vehicle" placeholder="Vehicle Number" required>
+
+      <select name="status">
+        <option value="Pending">Pending</option>
+        <option value="Paid">Paid</option>
+      </select>
+
+      <button type="submit">➕ Add Booking</button>
+    </form>
+  </div>
+
+  <div class="booking-list">
+    <h2>All Bookings</h2>
+
+    {% for b in bookings %}
+    <div class="booking-card">
+      <div class="top">
+        <strong>{{ b.pickup }} → {{ b.drop }}</strong>
+        <span class="{{ b.status|lower }}">{{ b.status }}</span>
+      </div>
+
+      <p>💰 ₹{{ b.amount }}</p>
+      <p>👨 Driver: {{ b.driver }}</p>
+      <p>📞 {{ b.contact }}</p>
+      <p>🚗 {{ b.vehicle }}</p>
+
+      <div class="actions">
+        <a href="/edit/{{ b.id }}">✏️ Edit</a>
+        <a href="/paid/{{ b.id }}">✅ Paid</a>
+        <a href="/delete/{{ b.id }}" class="delete">🗑 Delete</a>
+      </div>
     </div>
-    <div class="stat">
-        <h3>Final Profit</h3>
-        <p>₹ {{ final_profit }}</p>
-    </div>
+    {% endfor %}
+  </div>
+
 </div>
 
-<br>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/sw.js");
+}
+</script>
 
-<a class="btn" href="/add">+ Add Booking</a>
-<a class="btn green" href="/maintenance">+ Add Maintenance</a>
-
-<br><br>
-
-<div class="card">
-    <h3>All Bookings</h3>
-
-    <table>
-        <tr>
-            <th>Customer</th>
-            <th>Contact</th>
-            <th>Pickup</th>
-            <th>Drop</th>
-            <th>Date</th>
-            <th>Vehicle</th>
-            <th>Driver</th>
-            <th>Total</th>
-            <th>Paid</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-
-        {% for b in bookings %}
-        <tr>
-            <td>{{ b.customer_name }}</td>
-            <td>{{ b.contact_number }}</td>
-            <td>{{ b.pickup }}</td>
-            <td>{{ b.drop_location }}</td>
-            <td>{{ b.date }} {{ b.time }}</td>
-            <td>{{ b.vehicle_number }}</td>
-            <td>{{ b.driver_name }}</td>
-            <td>₹ {{ b.total_payment }}</td>
-            <td>₹ {{ b.paid_amount }}</td>
-            <td>{{ b.payment_status }}</td>
-            <td>
-                <a class="btn" href="/edit/{{ b.id }}">Edit</a>
-                <a class="btn danger" href="/delete/{{ b.id }}">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-
-<div class="card">
-    <h3>Maintenance List</h3>
-
-    <table>
-        <tr>
-            <th>Title</th>
-            <th>Vehicle</th>
-            <th>Amount</th>
-            <th>Date</th>
-        </tr>
-
-        {% for m in maintenance %}
-        <tr>
-            <td>{{ m.title }}</td>
-            <td>{{ m.vehicle_number }}</td>
-            <td>₹ {{ m.amount }}</td>
-            <td>{{ m.date }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-
-{% endblock %}
+</body>
+</html>
